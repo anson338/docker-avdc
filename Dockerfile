@@ -1,33 +1,36 @@
-FROM python:3.8-slim
-LABEL maintainer="VergilGao"
+FROM inn0kenty/pyinstaller-alpine:3.8 as build
 
 # 软件包版本号
 ARG AVDC_VERSION
+WORKDIR /build
 
 RUN \
-    apt-get update && \
-    apt-get install -y wget ca-certificates && \
-    mkdir build && \
-    cd build && \
     wget -O - https://github.com/yoshiko2/AV_Data_Capture/archive/${AVDC_VERSION}.tar.gz | tar xz && \
-    mv AV_Data_Capture-${AVDC_VERSION} /app && \
-    cd .. && \
-    rm -rf build && \
-    cd /app && \
+    mv AV_Data_Capture-${AVDC_VERSION} src && cd src && \
     sed -i '/pyinstaller/d' requirements.txt && \
-    cat requirements.txt && \
-    pip install --no-cache-dir -r requirements.txt && \
-    apt-get purge -y wget
+    pip install -r requirements.txt && \
+    cloudscraper_path=$(python -c 'import cloudscraper as _; print(_.__path__[0])' | tail -n 1) && \
+    pyinstaller \
+        --noconfirm --clean --onefile --name app AV_Data_Capture.py \
+        --hidden-import ADC_function.py \
+        --hidden-import core.py \
+        --add-data "$cloudscraper_path:cloudscraper"
 
-VOLUME /app/data
-WORKDIR /app
-
-COPY docker-entrypoint.sh docker-entrypoint.sh
+FROM alpine
+LABEL maintainer="VergilGao"
 
 # 镜像版本号
 ARG BUILD_DATE
 ARG VERSION
 LABEL build_version="catfight360.com version:- ${VERSION} build-date:- ${BUILD_DATE}"
+
+WORKDIR /app
+
+COPY --from=build /build/src/dist/app .
+
+COPY docker-entrypoint.sh docker-entrypoint.sh
+
+VOLUME /app/data
 
 RUN chmod +x docker-entrypoint.sh
 

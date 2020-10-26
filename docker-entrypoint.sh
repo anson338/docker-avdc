@@ -1,4 +1,4 @@
-#! /bin/bash
+#! /bin/sh
 set -e
 
 FAILED_OUTPUT=${FAILED_OUTPUT:-"failed"}
@@ -17,7 +17,6 @@ PRIORITY_WEBSITE=${PRIORITY_WEBSITE:-"javbus,javdb,fanza,xcity,mgstage,fc2,avsox
 ESCAPE_FOLDERS=${ESCAPE_FOLDERS:-"${SUCCESS_OUTPUT},${FAILED_OUTPUT}"}
 DEBUG=${DEBUG:-"0"}
 
-cd /app
 cat>config.ini<<EOF
 [common]
 main_mode=1
@@ -54,4 +53,4 @@ folders=${ESCAPE_FOLDERS}
 switch=${DEBUG}
 EOF
 
-exec python AV_Data_Capture.py
+exec ./app
